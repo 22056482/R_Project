@@ -1,0 +1,117 @@
+---
+title: "Task-02"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+**Import necessary libraries**
+
+```{r}
+library(dplyr)
+library(knitr)
+```
+
+**Loading dataset**
+
+```{r}
+business_data <- read.csv("../data/businesses.csv")
+review_data <- read.csv("../data/reviews.csv")
+```
+
+```{r}
+business_data[business_data == ""] <- NA
+review_data[review_data == ""] <- NA
+```
+
+```{r}
+# Define the names of columns you will use
+business_cols <- c("business_id", "state", "business_avg_stars", "review_count")
+
+# use necessary columns
+business_data <- business_data[, (colnames(business_data) %in% business_cols)]
+```
+
+```{r}
+# Define the names of columns you will use
+review_cols <- c("user_id", "business_id")
+
+# use necessary columns
+review_data <- review_data[, (colnames(review_data) %in% review_cols)]
+```
+
+**NA Handling**
+
+```{r}
+colSums(is.na(business_data)) # checking NA value for each columns on business_data
+```
+
+```{r}
+colSums(is.na(review_data)) # checking NA value for each columns on review_data
+```
+
+In the *business_data*, there are missing values in certain columns, including the *business_id* column, which is crucial for deeper analysis. Therefore, I decided to remove rows that contain missing values.
+
+In the *review_data*, there are many missing values in both columns. However, only the *business_id* column is essential for the analysis, while the *user_id* column is only used to count the number of users per business. Thus, I filled the missing values in the *user_id* column with 'UNK' and removed the rows where the *business_id* is missing.
+
+```{r}
+business_data = na.omit(business_data) # remove every row with NA value
+```
+
+```{r}
+colSums(is.na(business_data)) # checking NA value for each columns on business_data
+```
+
+```{r}
+review_data$user_id[is.na(review_data$user_id)] <- "UNK" # Fill missing values in the user_id column with 'unk'
+review_data = na.omit(review_data) # Remove remaining missing values in the business_id column
+```
+
+```{r}
+colSums(is.na(review_data)) # checking NA value for each columns on review_data
+```
+
+**Analysis**
+
+Merge business_data with review_data and calculate the number of users for each business
+
+```{r}
+# Count the number of unique user_id values for each business_id in review_data
+review_summary <- review_data %>%
+  group_by(business_id) %>%
+  summarise(user_count = n_distinct(user_id))
+
+# Merge the review_summary with business_data
+business_data <- business_data %>%
+  left_join(review_summary, by = "business_id")
+
+head(business_data) # display 6 rows of business_data
+```
+
+```{r}
+colSums(is.na(business_data)) # checking NA value for each columns on business_data
+```
+
+Group the data by state and calculate the average business rating, the total number of reviews for all businesses in each state, the total number of users associated with all businesses in each state, and the number of businesses in each state
+
+```{r}
+# Grouping data by state
+summary_table <- business_data %>%
+  group_by(state) %>%
+  summarise(
+    average_review_star = mean(business_avg_stars), # calculating avg review stars for each business of every state 
+    number_of_review = sum(review_count), # calculating total of review for each business of every state 
+    user_count_total = sum(user_count), # calculating total of user for each business of every state
+    business_count = n(), # calculating number of business for each state
+    .groups = 'drop' # Remove the grouping structure after summarise
+  )
+
+# visualize table using kable
+kable(summary_table, # using summary table
+      caption = "Business summary for each State",
+      align = 'lcccc') # 'l' for left alignment, 'c' for center alignment.
+```
+
+```{r}
+summary(summary_table) # basic statistic of summary_table
+```
