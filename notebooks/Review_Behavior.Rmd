@@ -1,0 +1,114 @@
+---
+title: "Task-04"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+**Importing necessary library**
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(knitr)
+```
+
+**Loading data**
+
+```{r}
+users_file <- "../data/users.csv"
+reviews_file <- "../data/reviews.csv"
+
+users <- read.csv(users_file, stringsAsFactors = FALSE)
+reviews <- read.csv(reviews_file, stringsAsFactors = FALSE)
+```
+
+**Grouping**
+
+First, clean the reviews data by replacing missing text values (NA) with empty strings, then calculate and store the length of each review in a new column called review_length. Next, the reviews data is merged with the users data based on user_id using an inner join, resulting in *merged_data*. Finally, merged_data is filtered to create analysis_data_stars, which contains only the rows where the stars column does not have missing values (NA).
+
+```{r}
+users$member_since <- ymd_hms(users$member_since, truncated = 3, quiet = TRUE) # Convert the 'member_since' column to date-time format (POSIXct)
+
+users <- users[!is.na(users$member_since), ] # Remove rows where the member_since column has NA values
+
+# Create user groups: "Before 2020" and "2020 and After"
+users$user_group <- ifelse(users$member_since < as.Date("2020-01-01"), 
+                           "Before 2020", 
+                           "2020 and After")
+users$user_group <- as.factor(users$user_group) # Convert the data type of the newly created user_group column to a factor
+```
+
+Next, calculate the length of the text
+
+```{r}
+reviews$text[is.na(reviews$text)] <- "" # eplace all NA (missing) values in the 'text' column of the 'reviews' dataframe with an empty string
+reviews$review_length <- nchar(reviews$text) # creating new column for length of the text
+merged_data <- inner_join(reviews, users, by = "user_id") # merge data using inner join
+analysis_data_stars <- merged_data[!is.na(merged_data$stars), ] 
+```
+
+Calculate summary statistics for star ratings *star* based on user groups *user_group* from the *analysis_data_stars* dataset. First, group the data by user_group. Then, for each group, compute the mean *mean_stars*, median *median_stars*, standard deviation *sd_stars* of the star ratings, and the number of reviews *count* in that group. Then, visualize the table using kable.
+
+```{r}
+# Calculate average star rating by user group
+avg_stars_by_group <- analysis_data_stars %>%
+  group_by(user_group) %>%
+  summarise(
+    mean_stars = mean(stars),
+    median_stars = median(stars),
+    sd_stars = sd(stars),
+    count = n()
+  )
+
+print(kable(avg_stars_by_group))
+```
+
+**Visualization**
+
+Display the distribution of star ratings *stars* for each user group *user_group* from the *analysis_data_stars* dataset. This boxplot will show how the star ratings are distributed (median, quartiles, and outliers) for each *user_group*, with each group given a different fill color for easier identification.
+
+```{r}
+star_rating_plot <- ggplot(analysis_data_stars, aes(x = user_group, y = stars, fill = user_group)) +
+  geom_boxplot(na.rm = TRUE) +
+  labs(
+    title = "Distribution of Star Ratings by User Group",
+    x = "User Group",
+    y = "Rating Star"
+  ) +
+  theme_minimal()
+print(star_rating_plot)
+```
+
+```{r}
+
+# Calculate average review length by user group
+# 'merged_data' can be used here as review_length=0 for NA text is fine.
+avg_length_by_group <- merged_data %>%
+  group_by(user_group) %>%
+  summarise(
+    mean_length = mean(review_length),
+    median_length = median(review_length),
+    sd_length = sd(review_length),
+    count = n()
+  )
+
+print(kable(avg_length_by_group))
+```
+
+```{r}
+# Visualize average review length (as requested)
+avg_length_plot <- ggplot(avg_length_by_group, aes(x = user_group, y = mean_length, fill = user_group)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = round(mean_length, 1)), vjust = -0.5, position = position_dodge(width = 0.9), size = 3.5) +
+  labs(
+    title = "Average Review Length by User Group",
+    x = "User Group",
+    y = "Average Review Length (char)"
+  ) +
+  theme_minimal()
+print(avg_length_plot)
+```
+
+There is no statistically significant difference between the two groups.\
