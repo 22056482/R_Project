@@ -1,9 +1,17 @@
 ---
-title: "User_Review"
-output: html_document
+title: "Task-01"
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-Importing necessary libraries
+Name : Imanuel Adipranata
+
+ID : 22056482
+
+Github : <https://github.com/22056482/R_Project>
+
+**Importing necessary libraries**
 
 ```{r}
 library(dplyr)
@@ -14,20 +22,13 @@ library(knitr)
 
 ```{r}
 user_data <- read.csv("../data/users.csv")
-```
-
-```{r}
-user_data
+head(user_data)
 ```
 
 As you can see there are several missing value on the data. We need to assign NA value to the missing data because R will read that as empty string ("")
 
 ```{r}
 user_data[user_data == ""] <- NA
-```
-
-```{r}
-user_data
 ```
 
 Since each entity can already be identified using *user_id*, the *name* column can be ignored.
@@ -73,10 +74,8 @@ user_data <- user_data %>%
     )
   )
 user_data <- subset(user_data, select = -year_joined) # remove year_joined column
-```
 
-```{r}
-user_data
+head(user_data)
 ```
 
 **Data Exploratory**
@@ -150,3 +149,5 @@ kable(summary_table,
       format = "pipe",
       align = "c")
 ```
+
+The conclusion is that there are no significant differences between each user group. However, there is a considerable difference in the number of users in each group.
