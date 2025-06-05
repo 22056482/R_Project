@@ -1,4 +1,4 @@
-business_id,name,city,state,business avg stars,review_count,categories,business_group
+business_id,name,city,state,business_avg_stars,review_count,categories,business_group
 b_0,"Steele, Hampton and Odonnell",Michaelbury,NV,2.5,351,"anything, week, if",A
 b_1,"Kim, Andrews and Joyce",East Susan,KY,4.8,267,right,A
 b_2,Simmons PLC,New Tamara,PA,3.9,397,establish,A
